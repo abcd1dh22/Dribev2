@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:pdfx/pdfx.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:video_player/video_player.dart';
 import '../actions.dart';
 import '../models.dart';
@@ -352,13 +352,8 @@ class _PdfView extends StatefulWidget {
 }
 
 class _PdfViewState extends State<_PdfView> {
-  late final PdfControllerPinch ctl = PdfControllerPinch(document: PdfDocument.openFile(widget.path));
-
-  @override
-  void dispose() {
-    ctl.dispose();
-    super.dispose();
-  }
+  final ctl = PdfViewerController();
+  int page = 1, total = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -366,25 +361,34 @@ class _PdfViewState extends State<_PdfView> {
     return Stack(children: [
       Padding(
         padding: EdgeInsets.only(top: mq.padding.top + 56),
-        child: PdfViewPinch(controller: ctl, backgroundDecoration: const BoxDecoration(color: _bg)),
-      ),
-      Positioned(
-        bottom: mq.padding.bottom + 20,
-        left: 0,
-        right: 0,
-        child: Center(
-          child: PdfPageNumber(
-            controller: ctl,
-            builder: (_, state, page, count) => (count == null || count == 0)
-                ? const SizedBox.shrink()
-                : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: const Color(0xB3000000), borderRadius: BorderRadius.circular(20)),
-                    child: Text('${bn(page)} / ${bn(count)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                  ),
+        child: PdfViewer.file(
+          widget.path,
+          controller: ctl,
+          params: PdfViewerParams(
+            backgroundColor: _bg,
+            onPageChanged: (p) {
+              if (!mounted) return;
+              setState(() {
+                page = p ?? 1;
+                total = ctl.isReady ? ctl.pageCount : total;
+              });
+            },
           ),
         ),
       ),
+      if (total > 0)
+        Positioned(
+          bottom: mq.padding.bottom + 20,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(color: const Color(0xB3000000), borderRadius: BorderRadius.circular(20)),
+              child: Text('${bn(page)} / ${bn(total)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+            ),
+          ),
+        ),
     ]);
   }
 }

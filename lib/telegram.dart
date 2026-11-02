@@ -51,17 +51,7 @@ class Telegram {
 
   Part _part(Map m) {
     final d = m['document'] as Map;
-    final th = (d['thumbnail'] ?? d['thumb']) as Map?;
-    return Part(d['file_id'] as String, m['message_id'] as int, (d['file_size'] ?? 0) as int, th?['file_id'] as String?);
-  }
-
-  Future<void> downloadSingle(String fileId, String dest) async {
-    final path = await _filePath(fileId);
-    try {
-      await _d.download('https://api.telegram.org/file/bot$token/$path', dest);
-    } on DioException {
-      throw TgException('থাম্বনেইল ডাউনলোড ব্যর্থ');
-    }
+    return Part(d['file_id'] as String, m['message_id'] as int, (d['file_size'] ?? 0) as int);
   }
 
   Future<List<Part>> upload(String path, String name, int size, void Function(double) onProgress) async {
